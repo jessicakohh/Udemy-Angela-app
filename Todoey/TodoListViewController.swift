@@ -11,8 +11,15 @@ class TodoListViewController: UITableViewController {
     
     var itemArray = ["할일1", "할일2", "할일3"]
     
+    // userDefaults (사용자 인터페이스)
+    let defaults = UserDefaults.standard
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if let items = defaults.array(forKey: "TodoListArray") as? [String] {
+            itemArray = items
+        }
         
     }
     
@@ -26,6 +33,8 @@ class TodoListViewController: UITableViewController {
     
     // 행에 대한 셀
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
+//        let cell = UITableViewCell(style: .default, reuseIdentifier: "ToDoItemCell")
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
         
@@ -63,6 +72,9 @@ class TodoListViewController: UITableViewController {
             
             // 사용자가 UIAlert에서 항목 추가 버튼을 클릭하면 어떻게 되는지
             self.itemArray.append(textField.text!)
+            
+            self.defaults.set(self.itemArray, forKey: "TodoListArray")
+            
             self.tableView.reloadData()
         }
         
