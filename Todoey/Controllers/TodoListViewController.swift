@@ -18,7 +18,8 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-
+        print(dataFilePath)
+        
         let newItem = Item()
         newItem.title = "할일1"
         newItem.done = true
@@ -34,6 +35,9 @@ class TodoListViewController: UITableViewController {
         
         if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
             itemArray = items
+            
+            loadItems()
+            
         }
         
     }
@@ -48,7 +52,7 @@ class TodoListViewController: UITableViewController {
     
     // 행에 대한 셀
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-                
+        
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
         
         let item = itemArray[indexPath.row]
@@ -71,7 +75,7 @@ class TodoListViewController: UITableViewController {
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
         saveItems()
-                
+        
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
@@ -94,7 +98,7 @@ class TodoListViewController: UITableViewController {
             
             self.itemArray.append(newItem)
             self.saveItems()
-           
+            
         }
         
         // 텍스트필드가 있는 UIAlert
@@ -105,16 +109,16 @@ class TodoListViewController: UITableViewController {
             print("+를 눌렀을 때")
         }
         
-        
         alert.addAction(action)
         present(alert, animated: true, completion: nil)
     }
     
     
-    // MARK: - Model Manupulation Methods
-    
+    // MARK: - Model Manupulation Methods (모델 조작 방법)
     
     func saveItems() {
+        
+        // 사용자 정의 개체의 배열을 plist에 쓸 수 있는 데이터로 만든 다음 해당 데이터가 필요할 때
         let encoder = PropertyListEncoder()
         
         do {
@@ -127,7 +131,17 @@ class TodoListViewController: UITableViewController {
         
         self.tableView.reloadData()
     }
-
+    
+    // plist decoder를 사용하여 항목 배열의 형태로 해당 데이터를 가져옴 
+    func loadItems() {
+        if let data = try? Data(contentsOf: dataFilePath!) {
+            let decoder = PropertyListDecoder()
+            do {
+                itemArray = try decoder.decode([Item].self, from: data)
+            } catch {
+                print("Error decoding item array, \(error)")
+            }
+        }
+    }
+    
 }
-
-
