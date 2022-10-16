@@ -10,6 +10,7 @@ import UIKit
 class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathExtension("Items.plist")
     
     // userDefaults (사용자 인터페이스)
     let defaults = UserDefaults.standard
@@ -17,6 +18,7 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+
         let newItem = Item()
         newItem.title = "할일1"
         newItem.done = true
@@ -30,10 +32,9 @@ class TodoListViewController: UITableViewController {
         newItem3.title = "할일3"
         itemArray.append(newItem3)
         
-        
-//        if let items = defaults.array(forKey: "TodoListArray") as? [String] {
-//            itemArray = items
-//        }
+        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
+            itemArray = items
+        }
         
     }
     
@@ -47,37 +48,30 @@ class TodoListViewController: UITableViewController {
     
     // 행에 대한 셀
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-//        let cell = UITableViewCell(style: .default, reuseIdentifier: "ToDoItemCell")
-        
+                
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
         
-        cell.textLabel?.text = itemArray[indexPath.row].title
+        let item = itemArray[indexPath.row]
         
-        if itemArray[indexPath.row].done == true {
-            cell.accessoryType = .checkmark
-        } else {
-            cell.accessoryType = .none
-        }
+        cell.textLabel?.text = item.title
+        
+        cell.accessoryType = item.done == true ? .checkmark : .none
         
         return cell
     }
     
+    
+    
+    
     // MARK: - TableView Delegate Methods
     
     override func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
-        // print(indexPath.row)
         
+        // 이 메서드 내에서 현재 인덱스 경로의 항목을 토글
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
-        if itemArray[indexPath.row].done == false {
-            itemArray[indexPath.row].done = true
-        } else {
-            itemArray[indexPath.row].done = false
-        }
-        
-        tableView.reloadData()
-        
+        saveItems()
+                
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
@@ -92,18 +86,15 @@ class TodoListViewController: UITableViewController {
         
         let alert = UIAlertController(title: "새 Todoey 항목 추가", message: "", preferredStyle: .alert)
         
-        let action = UIAlertAction(title: "항목 추가", style: .default) { (action) in
+        let action = UIAlertAction(title: "항목 추가", style: .default) { [self] (action) in
             
             // 사용자가 UIAlert에서 항목 추가 버튼을 클릭하면 어떻게 되는지
-            
             let newItem = Item()
             newItem.title = textField.text!
             
             self.itemArray.append(newItem)
-            
-            self.defaults.set(self.itemArray, forKey: "TodoListArray")
-            
-            self.tableView.reloadData()
+            self.saveItems()
+           
         }
         
         // 텍스트필드가 있는 UIAlert
@@ -118,6 +109,25 @@ class TodoListViewController: UITableViewController {
         alert.addAction(action)
         present(alert, animated: true, completion: nil)
     }
+    
+    
+    // MARK: - Model Manupulation Methods
+    
+    
+    func saveItems() {
+        let encoder = PropertyListEncoder()
+        
+        do {
+            // 데이터를 인코딩
+            let data = try encoder.encode(self.itemArray)
+            try data.write(to: self.dataFilePath!)
+        } catch {
+            print("Error encoding item array, \(error)")
+        }
+        
+        self.tableView.reloadData()
+    }
+
 }
 
 
