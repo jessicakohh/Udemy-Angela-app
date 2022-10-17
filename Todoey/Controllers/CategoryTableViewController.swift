@@ -1,0 +1,113 @@
+//
+//  TableViewController.swift
+//  Todoey
+//
+//  Created by juyeong koh on 2022/10/17.
+//
+
+import UIKit
+import CoreData
+
+class CategoryTableViewController: UITableViewController {
+    
+    var categories = [Category]()
+    
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        loadCategories()
+        
+        
+    }
+    
+    
+    // MARK: - TableView Datasource Methods
+    
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        
+        return categories.count
+    }
+    
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
+        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
+        
+        cell.textLabel?.text = categories[indexPath.row].name
+        
+        return cell
+    }
+    
+    // MARK: - Data Manipulation Methods (데이터 조작 방법)
+    
+    func saveCategories() {
+        
+        do {
+            try context.save()
+        } catch {
+            print("Error Saving Category \(error)")
+        }
+        
+        tableView.reloadData()
+        
+    }
+    
+    func loadCategories() {
+        
+        let request : NSFetchRequest<Category> = Category.fetchRequest()
+        
+        do {
+            categories = try context.fetch(request)
+        } catch {
+            print("카테고리 로드 중 오류 발생 \(error)")
+        }
+        
+        tableView.reloadData()
+    }
+    
+    
+    // MARK: - Add New Items
+    
+    
+    @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
+        
+        var textField = UITextField()
+        
+        let alert = UIAlertController(title: "새 Category 항목 추가", message: "", preferredStyle: .alert)
+        
+        let action = UIAlertAction(title: "카테고리 추가", style: .default) { [self] (action) in
+            
+            let newCategory = Category(context: self.context)
+            newCategory.name = textField.text!
+            
+            self.categories.append(newCategory)
+            self.saveCategories()
+        }
+        
+        // 텍스트필드가 있는 UIAlert
+        alert.addTextField { (field) in
+            textField = field
+            textField.placeholder = "Add a new category"
+        }
+        
+        alert.addAction(action)
+        present(alert, animated: true, completion: nil)
+    }
+    
+    
+    
+    
+    // MARK: - TableView Delegate Methods
+    
+    override func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+        
+        saveCategories()
+        
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
+    
+    
+    
+}
