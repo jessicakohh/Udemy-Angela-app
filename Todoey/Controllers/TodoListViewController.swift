@@ -6,11 +6,14 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathExtension("Items.plist")
+    
+    
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     // userDefaults (사용자 인터페이스)
     let defaults = UserDefaults.standard
@@ -18,29 +21,13 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        print(dataFilePath)
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
-        let newItem = Item()
-        newItem.title = "할일1"
-        newItem.done = true
-        itemArray.append(newItem)
-        
-        let newItem2 = Item()
-        newItem2.title = "할일2"
-        itemArray.append(newItem2)
-        
-        let newItem3 = Item()
-        newItem3.title = "할일3"
-        itemArray.append(newItem3)
-        
-        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
-            itemArray = items
-            
-            loadItems()
-            
-        }
+        loadItems()
         
     }
+    
+    
     
     
     // MARK: - Tableview Datasource Methods
@@ -71,8 +58,15 @@ class TodoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
         
-        // 이 메서드 내에서 현재 인덱스 경로의 항목을 토글
-        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        
+        // ✨D
+//        // 영구 데이터 소스에서 데이터 제거
+//        context.delete(itemArray[indexPath.row])
+//        // 테이블 뷰 데이터 소스 로드
+//        itemArray.remove(at: indexPath.row)
+        
+        
+        // itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
         saveItems()
         
@@ -93,8 +87,10 @@ class TodoListViewController: UITableViewController {
         let action = UIAlertAction(title: "항목 추가", style: .default) { [self] (action) in
             
             // 사용자가 UIAlert에서 항목 추가 버튼을 클릭하면 어떻게 되는지
-            let newItem = Item()
+            
+            let newItem = Item(context: self.context)
             newItem.title = textField.text!
+            newItem.done = false
             
             self.itemArray.append(newItem)
             self.saveItems()
@@ -116,32 +112,29 @@ class TodoListViewController: UITableViewController {
     
     // MARK: - Model Manupulation Methods (모델 조작 방법)
     
+    // context를 커밋해와야함
     func saveItems() {
-        
-        // 사용자 정의 개체의 배열을 plist에 쓸 수 있는 데이터로 만든 다음 해당 데이터가 필요할 때
-        let encoder = PropertyListEncoder()
         
         do {
             // 데이터를 인코딩
-            let data = try encoder.encode(self.itemArray)
-            try data.write(to: self.dataFilePath!)
+            try context.save()
         } catch {
-            print("Error encoding item array, \(error)")
+            print("오류 저장 context \(error)")
         }
         
         self.tableView.reloadData()
     }
     
-    // plist decoder를 사용하여 항목 배열의 형태로 해당 데이터를 가져옴 
-    func loadItems() {
-        if let data = try? Data(contentsOf: dataFilePath!) {
-            let decoder = PropertyListDecoder()
+        // plist decoder를 사용하여 항목 배열의 형태로 해당 데이터를 가져옴 (R)
+        func loadItems() {
+            // <> : 요청하려는 Entity (데이터 유형)
+            let request : NSFetchRequest<Item> = Item.fetchRequest()
+            
             do {
-                itemArray = try decoder.decode([Item].self, from: data)
+                itemArray = try context.fetch(request)
             } catch {
-                print("Error decoding item array, \(error)")
+                print("Error fetching data from context \(error)")
             }
         }
-    }
     
 }
