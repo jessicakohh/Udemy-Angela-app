@@ -7,7 +7,7 @@
 
 import UIKit
 import CoreData
-
+import RealmSwift
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -15,7 +15,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     // 앱이 로드될 때 호출, 나머지 앱이 다운됨
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-
+        
+        print(Realm.Configuration.defaultConfiguration.fileURL)
+        
+        let data = Data()
+        data.name = "Jessica"
+        data.age = 12
+        
+        do {
+            let realm = try Realm()
+            try realm.write {
+                realm.add(data)
+            }
+        } catch {
+            print("Realm을 초기화 하는 도중 오류 발생, \(error)")
+        }
+        
+        
         return true
     }
 
